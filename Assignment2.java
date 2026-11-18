@@ -1,48 +1,66 @@
 
 import java.util.Scanner;
-import java.util.Arrays;
 
 public class Assignment2 {
 
     public static void main(String[] args) {
         Scanner input = new Scanner(System.in);
+        boolean running = true;
 
-        while (true) {
+        while (running == true) {
+
             System.out.print("Enter reference string (9999 to exit): ");
             String reference = input.nextLine().trim();
 
+            // Stop the program when the user enters 9999
             if (reference.equals("9999")) {
-                System.out.println("Program terminated.");
-                break;
+                running = false;
+                continue;
             }
 
-            // Remove commas and spaces
+            // Removes commas and spaces from the user input
             String cleaned = reference.replaceAll("[,\\s]", "");
 
-            if (cleaned.isEmpty() || cleaned.length() > 15
-                    || !cleaned.matches("[0-9]+")) {
+            boolean valid = true;
+
+            if (cleaned.length() == 0 || cleaned.length() > 15) {
+                valid = false;
+            }
+
+            for (int i = 0; i < cleaned.length(); i++) {
+                char digit = cleaned.charAt(i);
+
+                if (digit < '0' || digit > '9') {
+                    valid = false;
+                }
+            }
+
+            if (valid == false) {
                 System.out.println("Invalid reference string.");
                 continue;
             }
 
+            // Converting the reference string into an integer array
             int[] pages = new int[cleaned.length()];
 
             for (int i = 0; i < cleaned.length(); i++) {
-                pages[i] = Character.getNumericValue(cleaned.charAt(i));
+                String digit = cleaned.substring(i, i + 1);
+                pages[i] = Integer.parseInt(digit);
             }
 
-            System.out.println("\nSelect Page Replacement Algorithm:");
+            // Display algorithm choices
+            System.out.println("\nSelect a Page Replacement Algorithm!");
             System.out.println("1. LRU Approximation Using a Reference Byte");
             System.out.println("2. Second Chance Replacement");
             System.out.println("3. Optimal Replacement");
             System.out.println("4. LFU");
             System.out.println("5. FIFO");
 
-            System.out.print("Enter choice (1-5): ");
+            System.out.print("Enter choice: ");
             int choice;
 
             try {
-                choice = Integer.parseInt(input.nextLine().trim());
+                choice = Integer.parseInt(input.nextLine());
             } catch (NumberFormatException e) {
                 System.out.println("Invalid algorithm choice.");
                 continue;
@@ -53,23 +71,25 @@ public class Assignment2 {
                 continue;
             }
 
+            // Ask for the number of allocated frames
             System.out.print("Enter number of frames (2-9): ");
             int frameCount;
 
             try {
-                frameCount = Integer.parseInt(input.nextLine().trim());
+                frameCount = Integer.parseInt(input.nextLine());
             } catch (NumberFormatException e) {
                 System.out.println("Invalid number of frames.");
                 continue;
             }
 
             if (frameCount < 2 || frameCount > 9) {
-                System.out.println("Number of frames must be 2-9.");
+                System.out.println("Number of frames must be between 2 and 9.");
                 continue;
             }
 
             System.out.println();
 
+            // Run the selected algorithm
             if (choice == 5) {
                 fifo(pages, frameCount);
             } else {
@@ -80,45 +100,50 @@ public class Assignment2 {
         }
 
         input.close();
+        System.out.println("Program terminated.");
     }
 
+    // FIFO Page Replacement Algorithm
     public static void fifo(int[] pages, int frameCount) {
-        int[] frames = new int[frameCount];
-        Arrays.fill(frames, -1);
 
-        int pointer = 0;
+        int[] frames = new int[frameCount];
         int pageFaults = 0;
+        int filledFrames = 0;
+
+        for (int i = 0; i < frameCount; i++) {
+            frames[i] = -1;
+        }
 
         System.out.println("Algorithm: FIFO");
-
-        System.out.print("Reference String: ");
-        for (int i = 0; i < pages.length; i++) {
-            System.out.print(pages[i]);
-            if (i < pages.length - 1) {
-                System.out.print(", ");
-            }
-        }
-        System.out.println();
-
+        printReferenceString(pages);
         System.out.println("Number of frames: " + frameCount);
         System.out.println("Content of frames after each page-fault:");
 
-        for (int page : pages) {
+        for (int i = 0; i < pages.length; i++) {
+
+            int page = pages[i];
             boolean found = false;
 
-            for (int frame : frames) {
-                if (frame == page) {
+            for (int j = 0; j < frameCount; j++) {
+                if (frames[j] == page) {
                     found = true;
-                    break;
                 }
             }
 
-            // Only change frames when a page fault occurs
-            if (!found) {
+            // If the page is not found, a page fault occurs
+            if (found == false) {
                 pageFaults++;
 
-                frames[pointer] = page;
-                pointer = (pointer + 1) % frameCount;
+                if (filledFrames < frameCount) {
+                    frames[filledFrames] = page;
+                    filledFrames++;
+                } 
+                else {
+                    for (int j = 0; j < frameCount - 1; j++) {
+                        frames[j] = frames[j + 1];
+                    }
+                    frames[frameCount - 1] = page;
+                }
 
                 printFrames(frames);
             }
@@ -127,14 +152,34 @@ public class Assignment2 {
         System.out.println("Number of page faults: " + pageFaults);
     }
 
-    public static void printFrames(int[] frames) {
-        for (int frame : frames) {
-            if (frame == -1) {
-                System.out.print("|   ");
-            } else {
-                System.out.print("| " + frame + " ");
+    
+
+    // Printing the reference string
+    public static void printReferenceString(int[] pages) {
+        System.out.print("Reference String: ");
+
+        for (int i = 0; i < pages.length; i++) {
+            System.out.print(pages[i]);
+
+            if (i < pages.length - 1) {
+                System.out.print(", ");
             }
         }
+
+        System.out.println();
+    }
+
+    // Printing out the frames
+    public static void printFrames(int[] frames) {
+
+        for (int i = 0; i < frames.length; i++) {
+            if (frames[i] == -1) {
+                System.out.print("|   ");
+            } else {
+                System.out.print("| " + frames[i] + " ");
+            }
+        }
+
         System.out.println("|");
     }
 }
