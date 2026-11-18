@@ -90,9 +90,15 @@ public class Assignment2 {
             System.out.println();
 
             // Run the selected algorithm
-            if (choice == 5) {
+            if (choice == 4) {
+                lfu(pages, frameCount);
+            } 
+
+            else if(choice == 5){
                 fifo(pages, frameCount);
-            } else {
+            }
+            
+            else {
                 System.out.println("Algorithm not implemented yet.");
             }
 
@@ -152,7 +158,74 @@ public class Assignment2 {
         System.out.println("Number of page faults: " + pageFaults);
     }
 
-    
+
+    // LFU Page Replacement Algorithm
+    public static void lfu(int[] pages, int frameCount) {
+
+        int[] frames = new int[frameCount];
+        int[] counters = new int[frameCount];
+
+        int pageFaults = 0;
+
+        for (int i = 0; i < frameCount; i++) {
+            frames[i] = -1;
+            counters[i] = 0;
+        }
+
+        System.out.println("Algorithm: LFU");
+        printReferenceString(pages);
+        System.out.println("Number of frames: " + frameCount);
+        System.out.println("Content of frames after each page-fault:");
+
+        for (int i = 0; i < pages.length; i++) {
+
+            int page = pages[i];
+            boolean found = false;
+
+            for (int j = 0; j < frameCount; j++) {
+                if (frames[j] == page) {
+                    found = true;
+                    counters[j]++;
+                    break;
+                }
+            }
+
+            if (found == false) {
+                pageFaults++;
+
+                int emptyFrame = -1;
+
+                for (int j = 0; j < frameCount; j++) {
+                    if (frames[j] == -1) {
+                        emptyFrame = j;
+                        break;
+                    }
+                }
+
+                if (emptyFrame != -1) {
+                    frames[emptyFrame] = page;
+                    counters[emptyFrame] = 1;
+
+                } else {
+                    int smallest = 0;
+
+                    for (int j = 1; j < frameCount; j++) {
+                        if (counters[j] < counters[smallest]) {
+                            smallest = j;
+                        }
+                    }
+
+                    frames[smallest] = page;
+                    counters[smallest] = 1;
+                }
+
+                printLFU(frames, counters);
+            }
+        }
+
+        System.out.println("Number of page faults: " + pageFaults);
+    }
+
 
     // Printing the reference string
     public static void printReferenceString(int[] pages) {
@@ -182,4 +255,30 @@ public class Assignment2 {
 
         System.out.println("|");
     }
+
+
+    // Print frames and their counters for LFU
+    public static void printLFU(int[] frames, int[] counters) {
+
+        for (int i = 0; i < frames.length; i++) {
+            if (frames[i] == -1) {
+                System.out.print("|   ");
+            } else {
+                System.out.print("| " + frames[i] + " ");
+            }
+        }
+
+        System.out.print("|  Counters: ");
+
+        for (int i = 0; i < counters.length; i++) {
+            System.out.print(counters[i]);
+
+            if (i < counters.length - 1) {
+                System.out.print(", ");
+            }
+        }
+
+        System.out.println();
+    }
+
 }
