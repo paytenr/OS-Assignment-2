@@ -91,9 +91,12 @@ public class Assignment2 {
 
             // Run the selected algorithm
             if (choice == 1){
-                System.out.println("loser");
+                lru(pages, frameCount);
             }
-            if (choice == 3) {
+            else if (choice == 2){
+                secondChance(pages, frameCount);
+            }
+            else if (choice == 3) {
                 optimal(pages, frameCount);
             } 
 
@@ -302,6 +305,211 @@ public class Assignment2 {
         System.out.println("Number of page faults: " + pageFaults);
     }
 
+
+    // Second Chance Page Replacement Algorithm
+    public static void secondChance(int[] pages, int frameCount) {
+
+        int[][] frames = new int[frameCount][2];
+
+        int pointer = 0;
+        int pageFaults = 0;
+
+        for (int i = 0; i < frameCount; i++) {
+            frames[i][0] = -1;
+            frames[i][1] = 0;
+        }
+
+        System.out.println("Algorithm: Second Chance");
+        printReferenceString(pages);
+        System.out.println("Number of frames: " + frameCount);
+        System.out.println("Content of frames after each page-fault:");
+
+        for (int i = 0; i < pages.length; i++) {
+
+            int page = pages[i];
+            boolean found = false;
+
+            for (int j = 0; j < frameCount; j++) {
+                if (frames[j][0] == page) {
+                    found = true;
+
+                    frames[j][1] = 1;
+                    break;
+                }
+            }
+
+            if (found == false) {
+                pageFaults++;
+
+                boolean replaced = false;
+
+                while (replaced == false) {
+
+                    if (frames[pointer][0] == -1 ||
+                            frames[pointer][1] == 0) {
+
+                        frames[pointer][0] = page;
+                        frames[pointer][1] = 0;
+
+                        replaced = true;
+
+                    } else {
+                        frames[pointer][1] = 0;
+                    }
+
+                    pointer++;
+
+                    if (pointer == frameCount) {
+                        pointer = 0;
+                    }
+                }
+
+                printSecondChance(frames, pointer);
+            }
+        }
+
+        System.out.println("Number of page faults: " + pageFaults);
+    }
+
+
+    // LRU Approximation Using a Reference Byte
+    public static void lru(int[] pages, int frameCount) {
+
+        int[] frames = new int[frameCount];
+        int[] referenceBytes = new int[frameCount];
+        boolean[] referenced = new boolean[frameCount];
+
+        int pageFaults = 0;
+
+        for (int i = 0; i < frameCount; i++) {
+            frames[i] = -1;
+            referenceBytes[i] = 0;
+            referenced[i] = false;
+        }
+
+        System.out.println("Algorithm: LRU Approximation Using a Reference Byte");
+        printReferenceString(pages);
+        System.out.println("Number of frames: " + frameCount);
+        System.out.println("Content of frames after each page-fault:");
+
+        for (int i = 0; i < pages.length; i++) {
+
+            int page = pages[i];
+            boolean found = false;
+
+            for (int j = 0; j < frameCount; j++) {
+                if (frames[j] == page) {
+                    found = true;
+                    referenced[j] = true;
+                    break;
+                }
+            }
+
+            if (found == false) {
+                pageFaults++;
+
+                int emptyFrame = -1;
+
+                for (int j = 0; j < frameCount; j++) {
+                    if (frames[j] == -1) {
+                        emptyFrame = j;
+                        break;
+                    }
+                }
+
+                if (emptyFrame != -1) {
+                    frames[emptyFrame] = page;
+                    referenceBytes[emptyFrame] = 255;
+                    referenced[emptyFrame] = false;
+
+                } else {
+                    int smallest = 0;
+
+                    for (int j = 1; j < frameCount; j++) {
+                        if (referenceBytes[j] < referenceBytes[smallest]) {
+                            smallest = j;
+                        }
+                    }
+
+                    frames[smallest] = page;
+                    referenceBytes[smallest] = 255;
+                    referenced[smallest] = false;
+                }
+
+                printLRU(frames, referenceBytes);
+            }
+
+            if ((i + 1) % 4 == 0) {
+                shiftReferenceBytes(frames, referenceBytes, referenced);
+                printLRU(frames, referenceBytes);
+                System.out.println("shifting completed");
+            }
+        }
+
+        if (pages.length % 4 != 0) {
+            shiftReferenceBytes(frames, referenceBytes, referenced);
+            printLRU(frames, referenceBytes);
+            System.out.println("shifting completed");
+        }
+
+        System.out.println("Number of page faults: " + pageFaults);
+    }
+
+    public static void shiftReferenceBytes(int[] frames,
+                                           int[] referenceBytes,
+                                           boolean[] referenced) {
+
+        for (int i = 0; i < frames.length; i++) {
+
+            if (frames[i] != -1) {
+                referenceBytes[i] = referenceBytes[i] >> 1;
+
+                if (referenced[i] == true) {
+                    referenceBytes[i] = referenceBytes[i] | 128;
+                }
+
+                referenced[i] = false;
+            }
+        }
+    }
+
+    // Print for LRU
+    public static void printLRU(int[] frames, int[] referenceBytes) {
+
+        for (int i = 0; i < frames.length; i++) {
+            if (frames[i] == -1) {
+                System.out.print("|   ");
+            } else {
+                System.out.print("| " + frames[i] + " ");
+            }
+        }
+
+        System.out.println("|");
+
+        System.out.print("Reference bytes: ");
+
+        for (int i = 0; i < referenceBytes.length; i++) {
+
+            if (frames[i] == -1) {
+                System.out.print("--------");
+            } else {
+                String binary = Integer.toBinaryString(referenceBytes[i]);
+
+                while (binary.length() < 8) {
+                    binary = "0" + binary;
+                }
+
+                System.out.print(binary);
+            }
+
+            if (i < referenceBytes.length - 1) {
+                System.out.print(", ");
+            }
+        }
+
+        System.out.println();
+    }
+
     // Printing the reference string
     public static void printReferenceString(int[] pages) {
         System.out.print("Reference String: ");
@@ -356,4 +564,31 @@ public class Assignment2 {
         System.out.println();
     }
 
+    // Print for Second Chance Page Replacement
+    public static void printSecondChance(int[][] frames, int pointer) {
+
+        for (int i = 0; i < frames.length; i++) {
+            if (frames[i][0] == -1) {
+                System.out.print("|   ");
+            } else {
+                System.out.print("| " + frames[i][0] + " ");
+            }
+        }
+
+        System.out.println("|");
+
+        // Print reference bits
+        System.out.print("Reference bits: ");
+
+        for (int i = 0; i < frames.length; i++) {
+            System.out.print(frames[i][1]);
+
+            if (i < frames.length - 1) {
+                System.out.print(", ");
+            }
+        }
+
+        System.out.println();
+        System.out.println("Pointer: " + pointer);
+    }
 }
