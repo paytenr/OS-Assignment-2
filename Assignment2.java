@@ -90,8 +90,11 @@ public class Assignment2 {
             System.out.println();
 
             // Run the selected algorithm
-            if (choice == 4) {
-                lfu(pages, frameCount);
+            if (choice == 1){
+                System.out.println("loser");
+            }
+            if (choice == 3) {
+                optimal(pages, frameCount);
             } 
 
             else if(choice == 5){
@@ -99,7 +102,7 @@ public class Assignment2 {
             }
             
             else {
-                System.out.println("Algorithm not implemented yet.");
+                System.out.println("Please enter a valid choice.");
             }
 
             System.out.println("---------------------------------------------");
@@ -226,6 +229,78 @@ public class Assignment2 {
         System.out.println("Number of page faults: " + pageFaults);
     }
 
+    // Optimal Page Replacement Algorithm
+    public static void optimal(int[] pages, int frameCount) {
+
+        int[] frames = new int[frameCount];
+        int pageFaults = 0;
+
+        for (int i = 0; i < frameCount; i++) {
+            frames[i] = -1;
+        }
+
+        System.out.println("Algorithm: Optimal");
+        printReferenceString(pages);
+        System.out.println("Number of frames: " + frameCount);
+        System.out.println("Content of frames after each page-fault:");
+
+        for (int i = 0; i < pages.length; i++) {
+
+            int page = pages[i];
+            boolean found = false;
+
+            for (int j = 0; j < frameCount; j++) {
+                if (frames[j] == page) {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (found == false) {
+                pageFaults++;
+
+                int emptyFrame = -1;
+
+                for (int j = 0; j < frameCount; j++) {
+                    if (frames[j] == -1) {
+                        emptyFrame = j;
+                        break;
+                    }
+                }
+
+                if (emptyFrame != -1) {
+                    frames[emptyFrame] = page;
+
+                } else {
+                    int replaceIndex = 0;
+                    int farthest = -1;
+
+                    for (int j = 0; j < frameCount; j++) {
+
+                        int next = pages.length;
+
+                        for (int k = i + 1; k < pages.length; k++) {
+                            if (pages[k] == frames[j]) {
+                                next = k;
+                                break;
+                            }
+                        }
+
+                        if (next > farthest) {
+                            farthest = next;
+                            replaceIndex = j;
+                        }
+                    }
+
+                    frames[replaceIndex] = page;
+                }
+
+                printFrames(frames);
+            }
+        }
+
+        System.out.println("Number of page faults: " + pageFaults);
+    }
 
     // Printing the reference string
     public static void printReferenceString(int[] pages) {
